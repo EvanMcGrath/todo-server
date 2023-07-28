@@ -1,22 +1,15 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { v4 as uuidv4 } from 'uuid';
-// A schema is a collection of type definitions (hence "typeDefs")
-// that together define the "shape" of queries that are executed against
-// your data.
 const typeDefs = `#graphql
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
-  # This "Book" type defines the queryable fields for every book in our data source.
   type toDo {
     id: ID!
     task: String! 
     completed: Boolean!
   }
 
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
   type Query {
     allToDos: [toDo],
     activeToDos: [toDo]
@@ -24,27 +17,27 @@ const typeDefs = `#graphql
 
   type Mutation {
     createToDo(task: String!, completed: Boolean!): toDo,
+    updateToDo(id: String!, completed: Boolean!): toDo,
+    deleteToDo(id: String!): toDo,
   }
 `;
-const toDoData = [
+let toDoData = [
     {
-        id: 1,
+        id: "1",
         task: 'Walk the dog',
         completed: false,
     },
     {
-        id: 2,
+        id: "2",
         task: 'Grocery Shopping',
         completed: false,
     },
     {
-        id: 3,
+        id: "3",
         task: 'Go to the gym',
         completed: true,
     }
 ];
-// Resolvers define how to fetch the types defined in your schema.
-// This resolver retrieves books from the "books" array above.
 const resolvers = {
     Query: {
         allToDos: () => toDoData,
@@ -53,13 +46,41 @@ const resolvers = {
         }
     },
     Mutation: {
-        createToDo(parent, args) {
+        createToDo: (parent, args) => {
             const newToDo = args;
+            console.log(args);
             newToDo.id = uuidv4();
             toDoData.push(newToDo);
+            console.log(newToDo);
             return newToDo;
         },
-        // deleteToDo
+        //Make sure to add error handling here for if completed value on selected task is already true 
+        updateToDo: (parent, args) => {
+            toDoData.forEach((i) => {
+                if (i.id === args.id && args.completed) {
+                    i.completed = true;
+                }
+            });
+            return toDoData.find((i) => {
+                return i.id === args.id;
+            });
+        },
+        deleteToDo: (parent, args) => {
+            // const modifiedData = toDoData.filter((i) => args.id ==! i.id);
+            // toDoData = [...modifiedData];
+            // return true
+            let deleteIndex;
+            let resObject;
+            toDoData.forEach((i, index) => {
+                if (args.id === i.id) {
+                    deleteIndex = index;
+                    resObject = i;
+                }
+            });
+            toDoData.splice(deleteIndex, 1);
+            console.log(toDoData);
+            return resObject;
+        }
     }
 };
 // The ApolloServer constructor requires two parameters: your schema
