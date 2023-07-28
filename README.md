@@ -94,7 +94,7 @@ Run server. (This script compiles the TS into JS within the ./dist/ folder and i
 
 ```
 mutation DeleteToDo {
-    deleteToDo(id: null) {
+    deleteToDo(id: ID!) {
         id
         task
         completed
