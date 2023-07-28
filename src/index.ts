@@ -4,29 +4,30 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 
 import { v4 as uuidv4 } from 'uuid';
 
-
+// Tried to set up typeDefs and resolvers but could not figure out how to import typescript files that made the bundler/compiler happy 
 const typeDefs = `#graphql
-  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
-
   type toDo {
     id: ID!
     task: String! 
     completed: Boolean!
   }
-
+  # Added the allToDos query as a glorified console.log to check that all changes were staying consistent in data set 
   type Query {
     allToDos: [toDo],
     activeToDos: [toDo]
   }
 
+# I would have liked to set up input definitions for the mutations but was running into issues with the resolver syntax when implementing
+# so decided to keep it simple and write them in line 
   type Mutation {
     createToDo(task: String!, completed: Boolean!): toDo,
-    updateToDo(id: String!, completed: Boolean!): toDo,
-    deleteToDo(id: String!): toDo,
+    updateToDo(id: ID!, completed: Boolean!): toDo,
+    deleteToDo(id: ID!): toDo,
   }
 `;
 
 
+// Didn't have time to persist the data as I would have liked 
 let toDoData = [
   { 
     id: "1", 
@@ -66,7 +67,7 @@ const resolvers = {
       return newToDo
     },
 
-    //Make sure to add error handling here for if completed value on selected task is already true 
+    //If you have time add error handling here for if completed value on selected task is already true
     updateToDo: (parent, args) => {
       toDoData.forEach((i) => {
       if (i.id === args.id && args.completed) {
@@ -80,9 +81,6 @@ const resolvers = {
 
 
     deleteToDo: (parent, args) => {
-      // const modifiedData = toDoData.filter((i) => args.id ==! i.id);
-      // toDoData = [...modifiedData];
-      // return true
       let deleteIndex;
       let resObject;
       toDoData.forEach((i, index) => {
@@ -92,7 +90,6 @@ const resolvers = {
         }
       })
       toDoData.splice(deleteIndex, 1)
-      console.log(toDoData);
       return resObject
     }  
     }
@@ -101,17 +98,11 @@ const resolvers = {
 
 
 
-// The ApolloServer constructor requires two parameters: your schema
-// definition and your set of resolvers.
 const server = new ApolloServer({
   typeDefs,
   resolvers,
 });
 
-// Passing an ApolloServer instance to the `startStandaloneServer` function:
-//  1. creates an Express app
-//  2. installs your ApolloServer instance as middleware
-//  3. prepares your app to handle incoming requests
 const { url } = await startStandaloneServer(server, {
   listen: { port: 4000 },
 });
